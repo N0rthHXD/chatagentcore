@@ -18,8 +18,8 @@ class ConnectionManager:
         # 用户订阅: user_id -> {频道 -> set of websocket}
         self._subscriptions: Dict[str, Dict[str, Set[WebSocket]]] = {}
 
-        # Token 验证（简单版本）
-        self._valid_tokens: Set[str] = {"your_api_token"}
+        # Token 验证（默认为空，等待配置同步）
+        self._valid_tokens: Set[str] = set()
 
     def set_valid_tokens(self, tokens: list[str]) -> None:
         """设置有效的 Token 列表"""
@@ -248,13 +248,12 @@ class ConnectionManager:
     def validate_token(self, token: str) -> bool:
         """
         验证 Token
-
-        Args:
-            token: 待验证的 Token
-
-        Returns:
-            是否有效
         """
+        # 如果服务端没有设置 Token (为空)，则允许任何连接（方便首次配置）
+        if not self._valid_tokens or (len(self._valid_tokens) == 1 and "" in self._valid_tokens):
+            logger.warning("WebSocket server is running WITHOUT token authentication.")
+            return True
+            
         return token in self._valid_tokens
 
     def get_connection_id(self, websocket: WebSocket) -> Optional[str]:

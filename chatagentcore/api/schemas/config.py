@@ -9,20 +9,12 @@ class AuthConfig(BaseModel):
     """认证配置"""
 
     type: Literal["fixed_token", "jwt"] = Field(default="fixed_token", description="认证类型")
-    token: str = Field(default="", description="固定 API Token（当 type=fixed_token 时使用）")
+    token: str = Field(default="uos-ai-assistant-internal-token", description="固定内部认证 Token")
 
     # JWT 配置（当 type=jwt 时使用）
     jwt_secret: str = Field(default="", description="JWT 密钥")
     jwt_algorithm: str = Field(default="HS256", description="JWT 算法")
     jwt_expire_hours: int = Field(default=24, description="JWT 过期时间（小时）")
-
-    @field_validator("token")
-    @classmethod
-    def validate_fixed_token(cls, v: str, info) -> str:
-        """验证固定 Token"""
-        if info.data.get("type") == "fixed_token" and not v:
-            raise ValueError("token is required when type is fixed_token")
-        return v
 
 
 class LoggingConfig(BaseModel):
