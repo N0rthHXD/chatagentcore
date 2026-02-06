@@ -2,6 +2,7 @@
 
 import asyncio
 import time
+from pathlib import Path
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
@@ -15,7 +16,9 @@ from chatagentcore.api.models.message import WSAuthMessage, WSSubscribeMessage, 
 from chatagentcore.api.schemas.config import Settings
 from chatagentcore.api.routes import message as message_routes
 from chatagentcore.api.routes import webhook as webhook_routes
+from chatagentcore.api.routes import config as config_routes
 from chatagentcore.adapters.base import Message as BaseMessage
+from fastapi.staticfiles import StaticFiles
 
 
 def _default_message_handler(message: BaseMessage) -> None:
@@ -151,9 +154,64 @@ async def lifespan(app: FastAPI):
     # 启动配置文件监控
     await config_manager.watch(interval=5.0)
 
+    # 注册配置变更回调，实现平台热重载
+    async def on_config_change(new_settings: Settings):
+        logger.info("Config change detected, updating adapters and tokens...")
+        
+        # 1. 同步 WebSocket Token
+        if new_settings.auth.token:
+            ws_manager.set_valid_tokens([new_settings.auth.token])
+            
+        # 2. 更新适配器
+        adapter_manager = get_adapter_manager()
+        
+        for platform_name in ["feishu", "dingtalk", "qq"]:
+            cfg = getattr(new_settings.platforms, platform_name)
+            current_adapter = adapter_manager.get_adapter(platform_name)
+            
+            if cfg.enabled:
+                if current_adapter:
+                    # 如果已经运行，检查配置是否变更（这里简单处理为直接重启）
+                    logger.info(f"Platform {platform_name} config updated, reloading...")
+                    await adapter_manager.reload_adapter(platform_name, cfg.model_dump())
+                    new_adapter = adapter_manager.get_adapter(platform_name)
+                    if new_adapter:
+                        new_adapter.set_message_handler(_default_message_handler)
+                else:
+                    # 如果未运行且已开启，则启动
+                    logger.info(f"Platform {platform_name} enabled, loading...")
+                    await adapter_manager.load_adapter(platform_name, cfg.model_dump())
+                    new_adapter = adapter_manager.get_adapter(platform_name)
+                    if new_adapter:
+                        new_adapter.set_message_handler(_default_message_handler)
+            else:
+                if current_adapter:
+                    # 如果运行中但已关闭，则卸载
+                    logger.info(f"Platform {platform_name} disabled, unloading...")
+                    await adapter_manager.unload_adapter(platform_name)
+
+    def config_change_wrapper(new_settings: Settings):
+        # ConfigManager 的回调是同步的，我们需要在事件循环中运行异步任务
+        try:
+            loop = asyncio.get_event_loop()
+            if loop.is_running():
+                loop.create_task(on_config_change(new_settings))
+        except Exception as e:
+            logger.error(f"Error triggering config change callback: {e}")
+
+    config_manager.on_change(config_change_wrapper)
+
+    # 启动 Agent 进程 (uos-ai-assistant)
+    from chatagentcore.core.process_manager import get_process_manager
+    process_manager = get_process_manager()
+    if not await process_manager.start():
+        logger.critical("无法启动关键组件 uos-ai-assistant，程序将退出。")
+        # 抛出 SystemExit 或直接退出，FastAPI 会捕获并停止
+        import os
+        os._exit(1)
+
     # 同步有效的 API Token 到 WebSocket 管理器
-    if config_manager.config.auth.token:
-        ws_manager.set_valid_tokens([config_manager.config.auth.token])
+    ws_manager.set_valid_tokens([config_manager.config.auth.token])
 
     # 启动清理过期连接的后台任务
     async def prune_task():
@@ -176,6 +234,11 @@ async def lifespan(app: FastAPI):
 
     # 关闭时执行
     logger.info("Shutting down ChatAgentCore...")
+    
+    # 停止 Agent 进程
+    from chatagentcore.core.process_manager import get_process_manager
+    await get_process_manager().stop()
+
     prune_job.cancel()
     await event_bus.stop()
     await config_manager.stop_watch()
@@ -208,6 +271,22 @@ app.add_middleware(
 # 注册路由
 app.include_router(message_routes.router)
 app.include_router(webhook_routes.router)
+app.include_router(config_routes.router)
+
+# 挂载静态文件（管理后台）
+import sys
+if hasattr(sys, '_MEIPASS'):
+    # PyInstaller 打包后的临时路径
+    static_path = Path(sys._MEIPASS) / "static"
+else:
+    # 开发环境路径：项目根目录/static
+    static_path = Path(__file__).parent.parent.parent / "static"
+
+if not static_path.exists():
+    logger.warning(f"Static directory not found at {static_path}, creating empty one.")
+    static_path.mkdir(parents=True, exist_ok=True)
+
+app.mount("/admin", StaticFiles(directory=str(static_path), html=True), name="admin")
 
 # WebSocket 连接管理器
 ws_manager = get_manager()
