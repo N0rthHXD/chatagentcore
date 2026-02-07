@@ -1,13 +1,16 @@
 {
   "meta": {
-    "lastTouchedVersion": "2026.2.2-3",
-    "lastTouchedAt": "2026-02-07T04:04:48.903Z"
+    "lastTouchedVersion": "2026.2.3-1",
+    "lastTouchedAt": "2026-02-07T06:36:00.232Z"
   },
   "wizard": {
-    "lastRunAt": "2026-02-07T04:04:48.895Z",
-    "lastRunVersion": "2026.2.2-3",
+    "lastRunAt": "2026-02-07T06:33:00.631Z",
+    "lastRunVersion": "2026.2.3-1",
     "lastRunCommand": "doctor",
     "lastRunMode": "local"
+  },
+  "update": {
+    "checkOnStart": true
   },
   "models": {
     "providers": {
@@ -51,16 +54,6 @@
       }
     }
   },
-  "tools": {
-    "elevated": {
-      "enabled": true,
-      "allowFrom": {
-        "feishu": [
-          "feishu"
-        ]
-      }
-    }
-  },
   "messages": {
     "ackReactionScope": "group-mentions"
   },
@@ -75,7 +68,7 @@
       "appId": "cli_a909cd66f9f8dbde",
       "appSecret": "Fd1XCkfmxlKTxzixnsQ9veKok5ujiaIY",
       "domain": "feishu",
-      "groupPolicy": "allowlist"
+      "groupPolicy": "open"
     }
   },
   "gateway": {
