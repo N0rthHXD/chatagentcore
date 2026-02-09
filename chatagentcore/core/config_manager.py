@@ -78,17 +78,6 @@ class ConfigManager:
                 }
             }
             
-            # 智能同步：检查文件内容是否已一致
-            if self.uos_ai_config_path.exists():
-                try:
-                    with open(self.uos_ai_config_path, "r", encoding="utf-8") as f:
-                        existing_config = yaml.safe_load(f)
-                    if existing_config == uos_config:
-                        # 内容一致，跳过写入和日志
-                        return
-                except Exception:
-                    pass # 如果读取失败，则强制写入
-            
             with open(self.uos_ai_config_path, "w", encoding="utf-8") as f:
                 yaml.dump(uos_config, f, allow_unicode=True, sort_keys=False)
             
