@@ -55,7 +55,7 @@ import sys
 sys.path.insert(0, '.')
 from chatagentcore.api.main import app
 import uvicorn
-uvicorn.run(app, host='0.0.0.0', port=8000)
+uvicorn.run(app, host='127.0.0.1', port=36598)
 "
 ```
 
@@ -173,9 +173,8 @@ platforms:
 ### 发送消息示例
 
 ```bash
-curl -X POST "http://localhost:8000/api/v1/message/send" \
+curl -X POST "http://127.0.0.1:36598/api/v1/message/send" \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer your_api_token" \
   -d '{
     "platform": "feishu",
     "to": "ou_xxxxxxxxxxxxx",
@@ -184,6 +183,8 @@ curl -X POST "http://localhost:8000/api/v1/message/send" \
     "conversation_type": "user"
   }'
 ```
+
+*(注意：如果配置文件中 `auth.token` 为空，则无需携带 Authorization 请求头)*
 
 ---
 

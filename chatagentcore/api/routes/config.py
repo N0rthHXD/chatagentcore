@@ -53,19 +53,12 @@ async def update_config(new_config: Dict[str, Any]):
 
 @router.get("/status")
 async def get_system_status():
-    """获取系统运行状态（含 Agent 状态）"""
-    from chatagentcore.core.process_manager import get_process_manager
+    """获取系统运行状态"""
     from chatagentcore.core.adapter_manager import get_adapter_manager
     
-    pm = get_process_manager()
     am = get_adapter_manager()
     
     return {
-        "agent": {
-            "name": "uos-ai-assistant",
-            "running": pm.process is not None and pm.process.returncode is None,
-            "pid": pm.process.pid if pm.process else None
-        },
         "platforms": {
             name: {
                 "enabled": adapter.is_connected() if hasattr(adapter, 'is_connected') else True,

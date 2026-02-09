@@ -45,7 +45,7 @@ sudo cp deploy/chatagent.service /etc/systemd/system/
 sudo systemctl enable --now chatagent
 ```
 
-**成功标志**：终端或日志输出 `ChatAgentCore started successfully`。此时后台已自动拉起 AI 助手进程。
+**成功标志**：终端或日志输出 `ChatAgentCore started successfully`。
 
 ---
 
@@ -53,13 +53,12 @@ sudo systemctl enable --now chatagent
 
 您**不需要**手动修改任何配置文件。
 
-1.  **访问后台**：在浏览器打开 [http://localhost:8000/admin](http://localhost:8000/admin)
-2.  **检查状态**：顶部状态栏应显示 `uos-ai-assistant: 运行中 (PID: xxxx)`。
-3.  **配置机器人**：
+1.  **访问后台**：在浏览器打开 [http://127.0.0.1:36598/admin](http://127.0.0.1:36598/admin)
+2.  **配置机器人**：
     *   找到您要接入的平台（飞书/钉钉/QQ）。
     *   开启该平台的开关。
     *   填入对应的 `App ID`、`App Secret` 或 `Token` 等凭证信息。
-4.  **即时生效**：点击“保存配置”。系统会自动热重载，机器人将立即在对应平台上线。
+3.  **即时生效**：点击“保存配置”。系统会自动热重载，机器人将立即在对应平台上线。
 
 ---
 
@@ -74,9 +73,7 @@ sudo systemctl enable --now chatagent
 ## ❓ 常见问题
 
 - **Q: 启动后立即退出，报错“端口被占用”？**
-  - A: 默认使用 8000 端口，如果被占用，请使用 `./chatagent-service --port 9000` 启动。
-- **Q: 网页显示 `uos-ai-assistant: 已停止`？**
-  - A: 检查系统中是否能搜到 `uos-ai-assistant` 命令，或者查看终端是否有相关权限报错。
+  - A: 默认使用 36598 端口，如果被占用，请使用 `./chatagent-service --port 19000` 启动。
 - **Q: 机器人在线但无法回复？**
   - A: 请确保在机器人开放平台中已经正确配置了“事件订阅”或“消息接收权限”。
 

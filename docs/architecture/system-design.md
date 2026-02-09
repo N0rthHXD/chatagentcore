@@ -455,7 +455,7 @@ Response:
 
 ```javascript
 // 客户端连接
-const ws = new WebSocket('ws://localhost:8000/ws/events');
+const ws = new WebSocket('ws://127.0.0.1:36598/ws/events');
 
 // 认证（首次消息需携带 Token）
 ws.send(JSON.stringify({
@@ -619,8 +619,8 @@ ws.onmessage = (event) => {
 ```yaml
 # config.yaml - SDK 长连接方式
 server:
-  host: "0.0.0.0"
-  port: 8000
+  host: "127.0.0.1"
+  port: 36598
   # 注意：长连接方式无需配置 webhook_base_url
   debug: false
 

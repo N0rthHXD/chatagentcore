@@ -9,7 +9,7 @@ class AuthConfig(BaseModel):
     """认证配置"""
 
     type: Literal["fixed_token", "jwt"] = Field(default="fixed_token", description="认证类型")
-    token: str = Field(default="uos-ai-assistant-internal-token", description="固定内部认证 Token")
+    token: str = Field(default="", description="固定内部认证 Token（为空则禁用验证）")
 
     # JWT 配置（当 type=jwt 时使用）
     jwt_secret: str = Field(default="", description="JWT 密钥")
@@ -117,8 +117,8 @@ class PlatformsConfig(BaseModel):
 class ServerConfig(BaseModel):
     """服务器配置"""
 
-    host: str = Field(default="0.0.0.0", description="监听地址")
-    port: int = Field(default=8000, description="监听端口")
+    host: str = Field(default="127.0.0.1", description="监听地址")
+    port: int = Field(default=36598, description="监听端口")
     debug: bool = Field(default=False, description="调试模式")
 
 

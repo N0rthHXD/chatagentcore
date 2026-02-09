@@ -42,8 +42,6 @@ class ConfigManager:
         if not self.config_path.exists():
             logger.warning(f"Config file not found: {self.config_path}, creating default config")
             self._config = Settings()
-            # 设置初始默认 Token
-            self._config.auth.token = "uos-ai-assistant-internal-token"
             self._save_to_file(self._config.model_dump())
             self._raw_config = self._config.model_dump()
         else:
@@ -74,15 +72,22 @@ class ConfigManager:
             # 构造 uos-ai 需要的具体内容
             uos_config = {
                 "server": {
-                    "host": "localhost",
+                    "host": self._config.server.host,
                     "port": self._config.server.port,
                     "debug": self._config.server.debug
-                },
-                "auth": {
-                    "type": "fixed_token",
-                    "token": self._config.auth.token
                 }
             }
+            
+            # 智能同步：检查文件内容是否已一致
+            if self.uos_ai_config_path.exists():
+                try:
+                    with open(self.uos_ai_config_path, "r", encoding="utf-8") as f:
+                        existing_config = yaml.safe_load(f)
+                    if existing_config == uos_config:
+                        # 内容一致，跳过写入和日志
+                        return
+                except Exception:
+                    pass # 如果读取失败，则强制写入
             
             with open(self.uos_ai_config_path, "w", encoding="utf-8") as f:
                 yaml.dump(uos_config, f, allow_unicode=True, sort_keys=False)

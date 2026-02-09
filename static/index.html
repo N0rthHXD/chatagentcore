@@ -26,10 +26,9 @@
             <div id="system-status" class="flex items-center space-x-4">
                 <div class="flex items-center space-x-2 px-3 py-1 bg-slate-100 rounded-full text-sm">
                     <span class="relative flex h-2 w-2">
-                        <span id="agent-ping" class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
                         <span id="agent-dot" class="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
                     </span>
-                    <span id="agent-status-text" class="font-medium">uos-ai-assistant: 运行中</span>
+                    <span id="agent-status-text" class="font-medium">服务状态: 正常运行</span>
                 </div>
             </div>
         </div>
@@ -188,20 +187,16 @@
                 const status = await response.json();
                 
                 const dot = document.getElementById('agent-dot');
-                const ping = document.getElementById('agent-ping');
                 const text = document.getElementById('agent-status-text');
 
-                if (status.agent.running) {
-                    dot.className = 'relative inline-flex rounded-full h-2 w-2 bg-green-500';
-                    ping.className = 'animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75';
-                    text.innerText = `uos-ai-assistant: 运行中 (PID: ${status.agent.pid})`;
-                } else {
-                    dot.className = 'relative inline-flex rounded-full h-2 w-2 bg-red-500';
-                    ping.className = 'hidden';
-                    text.innerText = `uos-ai-assistant: 已停止`;
-                }
+                // 只要接口能返回数据，说明中间件服务本身运行正常
+                dot.className = 'relative inline-flex rounded-full h-2 w-2 bg-green-500';
+                text.innerText = `服务状态: 正常运行`;
             } catch (error) {
-                console.warn('Status check failed');
+                const dot = document.getElementById('agent-dot');
+                const text = document.getElementById('agent-status-text');
+                dot.className = 'relative inline-flex rounded-full h-2 w-2 bg-red-500';
+                text.innerText = `服务状态: 连接断开`;
             }
         }
 

@@ -101,9 +101,10 @@ async def lifespan(app: FastAPI):
     # 启动时执行
     logger.info("Starting ChatAgentCore...")
 
-    # 加载配置
+    # 加载配置 (如果尚未加载，则加载默认配置)
     config_manager = get_config_manager()
-    config_manager.load()
+    if not config_manager._config:
+        config_manager.load()
 
     # 配置日志
     log_config = LogConfig(
@@ -201,15 +202,6 @@ async def lifespan(app: FastAPI):
 
     config_manager.on_change(config_change_wrapper)
 
-    # 启动 Agent 进程 (uos-ai-assistant)
-    from chatagentcore.core.process_manager import get_process_manager
-    process_manager = get_process_manager()
-    if not await process_manager.start():
-        logger.critical("无法启动关键组件 uos-ai-assistant，程序将退出。")
-        # 抛出 SystemExit 或直接退出，FastAPI 会捕获并停止
-        import os
-        os._exit(1)
-
     # 同步有效的 API Token 到 WebSocket 管理器
     ws_manager.set_valid_tokens([config_manager.config.auth.token])
 
@@ -235,10 +227,6 @@ async def lifespan(app: FastAPI):
     # 关闭时执行
     logger.info("Shutting down ChatAgentCore...")
     
-    # 停止 Agent 进程
-    from chatagentcore.core.process_manager import get_process_manager
-    await get_process_manager().stop()
-
     prune_job.cancel()
     await event_bus.stop()
     await config_manager.stop_watch()

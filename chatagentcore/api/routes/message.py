@@ -22,18 +22,21 @@ from chatagentcore.core.event_bus import get_event_bus
 router = APIRouter(prefix="/api/v1", tags=["message"])
 
 # Token 验证依赖
-async def verify_token(authorization: str = Header(None)) -> str:
+async def verify_token(authorization: str = Header(None)) -> str | None:
     """验证 Token"""
+    config_manager = get_config_manager()
+    valid_token = config_manager.config.auth.token
+
+    # 如果没有配置 Token，则跳过验证
+    if not valid_token:
+        return None
+
     if not authorization:
         raise HTTPException(status_code=401, detail="Authorization header missing")
 
     token = authorization.replace("Bearer ", "") if authorization.startswith("Bearer ") else authorization
 
-    # 简单验证（实际应该使用配置的 Token）
-    config_manager = get_config_manager()
-    valid_token = config_manager.config.auth.token
-
-    if valid_token and token != valid_token:
+    if token != valid_token:
         raise HTTPException(status_code=403, detail="Invalid token")
 
     return token

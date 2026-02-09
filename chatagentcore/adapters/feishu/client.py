@@ -52,40 +52,39 @@ def _run_ws_in_new_thread(ws_client: WSClient):
     在独立线程中运行 WebSocket 客户端
 
     创建新的事件循环以避免与主线程/主应用的 event loop 冲突。
-
-    注意：lark_oapi.ws.client 模块级全局 loop 需要重置。
     """
-    # 新线程开始时，首先清除可能存在的全局 loop
-    # lark_oapi.ws.client 在模块导入时设置了全局 loop
-
-    # 主动设置当前线程的 loop 为 None，强制 asyncio 创建新的
-    try:
-        asyncio.get_event_loop()
-        asyncio.set_event_loop(None)
-    except RuntimeError:
-        # 没有当前事件循环，这是正常的
-        pass
-
     # 创建新的事件循环
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
 
-    # 重置 lark_oapi.ws.client 模块的全局 loop 变量
-    try:
-        from lark_oapi.ws import client as ws_client_module
-        if hasattr(ws_client_module, 'loop'):
-            ws_client_module.loop = loop
-    except Exception as e:
-        logger.debug(f"无法重置 SDK 模块 loop: {e}")
+    # 重置 lark-oapi 可能引用的所有全局 loop 变量
+    modules_to_check = [
+        'lark_oapi.ws.client',
+        'lark_oapi.ws.ws_client',
+        'lark_oapi.ws.client_engine',
+        'lark_oapi.ws.ws_client_engine'
+    ]
+    
+    for module_name in modules_to_check:
+        try:
+            import importlib
+            mod = importlib.import_module(module_name)
+            if hasattr(mod, 'loop'):
+                mod.loop = loop
+                logger.debug(f"已重置模块 {module_name} 的 loop")
+        except ImportError:
+            pass
+        except Exception as e:
+            logger.debug(f"重置 {module_name} loop 时出错: {e}")
 
     try:
+        logger.info("WebSocket 客户端线程开始运行...")
         # 在新的事件循环中运行 WebSocket 客户端
-        # 注意：WSClient.start() 是阻塞的，会一直保持连接
         ws_client.start()
     except Exception as e:
         logger.error(f"WebSocket 客户端运行异常: {e}")
     finally:
-        # 清理事件循环
+        logger.info("WebSocket 客户端线程已退出")
         try:
             if not loop.is_closed():
                 loop.close()
@@ -159,12 +158,25 @@ class FeishuClientSDK:
             return None
 
         # 创建内部事件分发器
-        class InternalEventDispatcher:
+        class InternalEventDispatcher(EventDispatcherHandler):
             def __init__(self, handlers: Dict[str, Callable[[str], Any]]):
+                super().__init__()
                 self.handlers = handlers
 
-            def do_without_validation(self, payload: str) -> Optional[Dict[str, Any]]:
-                """处理事件（不验证）"""
+            def _do(self, payload: bytes, header: Any) -> bytes:
+                """lark-oapi SDK 内部调用的核心处理方法"""
+                try:
+                    self.do_without_validation(payload)
+                except Exception as e:
+                    logger.error(f"Event dispatch error: {e}")
+                return json.dumps({"msg": "success"}).encode('utf-8')
+
+            def do(self, data: Any) -> Any:
+                """某些 SDK 版本可能调用的方法"""
+                return self._do(data, None)
+
+            def do_without_validation(self, payload: Any) -> Optional[Dict[str, Any]]:
+                """处理事件（不验证签名，WebSocket 模式专用）"""
                 try:
                     # payload 可能是 bytes 类型，需要解码为字符串
                     if isinstance(payload, bytes):
@@ -239,8 +251,9 @@ class FeishuClientSDK:
             )
             self._ws_thread.start()
 
-            # 等待一下让线程启动
-            time.sleep(0.5)
+            # 等待建立连接，确保飞书后台能检测到在线状态
+            logger.info("正在建立 WebSocket 连接，请稍候...")
+            time.sleep(2.0)
 
             self._ws_started = True
             logger.info("飞书 WebSocket 长连接已启动（在后台线程中运行）")

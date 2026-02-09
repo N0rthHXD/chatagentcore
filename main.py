@@ -49,10 +49,22 @@ def main():
         print(f"加载配置文件失败: {e}")
         sys.exit(1)
 
+    # 命令行参数覆盖配置文件设置，确保全局一致（例如同步到 uos-ai 的配置）
+    if args.host:
+        config_manager.config.server.host = args.host
+    if args.port:
+        config_manager.config.server.port = args.port
+    if args.debug:
+        config_manager.config.server.debug = True
+
+    # 如果有参数覆盖，重新同步一次配置到 uos-ai 路径
+    if args.host or args.port or args.debug:
+        config_manager._sync_to_uos_ai_path()
+
     # 确定最终运行参数
-    host = args.host if args.host else config_manager.config.server.host
-    port = args.port if args.port else config_manager.config.server.port
-    reload_mode = args.reload or args.debug or config_manager.config.server.debug
+    host = config_manager.config.server.host
+    port = config_manager.config.server.port
+    reload_mode = args.reload or config_manager.config.server.debug
     log_level = "debug" if (args.debug or config_manager.config.server.debug) else "info"
 
     logger.info(f"正在启动 ChatAgentCore...")

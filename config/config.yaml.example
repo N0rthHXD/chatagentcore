@@ -3,14 +3,14 @@
 
 # ==================== 服务器配置 ====================
 server:
-  host: "0.0.0.0"    # 监听地址（0.0.0.0 表示所有网络接口）
-  port: 8000          # 监听端口
+  host: "127.0.0.1"    # 监听地址（127.0.0.1 表示仅本地回路）
+  port: 36598          # 监听端口
   debug: false        # 调试模式
 
 # ==================== 认证配置 ====================
 auth:
   type: "fixed_token"          # 认证类型：fixed_token | jwt
-  token: "your_api_token_here" # 固定 API Token（当 type=fixed_token 时使用）
+  token: ""                    # 固定 API Token（为空则在 localhost 模式下禁用验证）
   # JWT 配置（当 type=jwt 时使用）
   jwt_secret: "your_jwt_secret_here"
   jwt_algorithm: "HS256"
