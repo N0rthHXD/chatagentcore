@@ -6,9 +6,9 @@
 
 ## 🛠 第一步：环境准备
 
-1.  **安装 uos-ai**：确保您的系统中已安装官方的 **uos-ai** 客户端。
-2.  **退出占用**：启动前请关闭已运行的 uos-ai 图形界面客户端。ChatAgentCore 将作为主控服务，自动在后台拉起并管理 AI 助手的核心进程。
-3.  **权限检查**：确保当前用户有权执行 `uos-ai-assistant` 命令。
+1.  **安装 uos-ai**：确保您的系统中已安装 **uos-ai**。
+    **skills**和**mcp**在uos-ai应用中配置，默认使用全部。
+2.  **协作模式**：ChatAgentCore 作为一个独立的中间件服务运行。
 
 ---
 
@@ -38,15 +38,12 @@ bash build.sh
 ```
 执行后可在 `dist/` 目录找到生成的二进制文件。
 
-### 4. 作为系统服务运行 (Linux/UOS)
+### 4. 作为系统服务运行 (Linux/Deepin)
 如果您希望程序开机自启且在后台静默运行：
 ```bash
 sudo cp deploy/chatagent.service /etc/systemd/system/
 sudo systemctl enable --now chatagent
 ```
-
-**成功标志**：终端或日志输出 `ChatAgentCore started successfully`。
-
 ---
 
 ## ⚙️ 第三步：可视化配置
@@ -58,6 +55,11 @@ sudo systemctl enable --now chatagent
     *   找到您要接入的平台（飞书/钉钉/QQ）。
     *   开启该平台的开关。
     *   填入对应的 `App ID`、`App Secret` 或 `Token` 等凭证信息。
+
+    *平台配置指南*
+      - **[飞书 (Feishu) 配置指南](docs/platforms/feishu.md)**
+      - **[钉钉 (DingTalk) 配置指南](docs/platforms/dingtalk.md)**
+      - **[QQ 机器人配置指南](docs/platforms/qq.md)**
 3.  **即时生效**：点击“保存配置”。系统会自动热重载，机器人将立即在对应平台上线。
 
 ---
@@ -66,7 +68,7 @@ sudo systemctl enable --now chatagent
 
 - **私聊/群聊**：在聊天平台中直接发消息或 @机器人。
 - **消息流转**：
-  用户消息 ➔ ChatAgentCore ➔ uos-ai (计算) ➔ ChatAgentCore ➔ 返回结果
+  用户消息 ➔ ChatAgentCore ➔ uos-ai智能体 ➔ ChatAgentCore ➔ 返回结果
 
 ---
 

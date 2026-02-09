@@ -2,12 +2,17 @@
 
 > 聊天机器人核心项目 - AI 驱动的对话系统基础设施
 
+## 📖 文档指南
+
+- **[用户使用指南 (必读)](README_USER.md)**：包含快速安装、可视化配置及各平台机器人申请教程。
+- **开发者文档**：见下文技术选型及目录结构。
+
 ## 项目简介
 
 ChatAgentCore 是一个中间服务程序，作为 Qt AI 应用与国内主流聊天软件之间的桥接中间件，支持多平台并发交互，配置驱动，提供统一的通用接口规范。
 
 **核心功能：**
-- 支持飞书、企业微信、钉钉三大平台接入
+- 支持飞书、钉钉、QQ 三大平台接入
 - 使用官方 SDK **WebSocket 长连接**方式收发消息，无需公网 IP
 - 提供模块化的消息处理和路由组件
 - 实现 HTTP API 接口
@@ -50,13 +55,7 @@ nano config/config.yaml
 
 ```bash
 # 启动主程序
-python -c "
-import sys
-sys.path.insert(0, '.')
-from chatagentcore.api.main import app
-import uvicorn
-uvicorn.run(app, host='127.0.0.1', port=36598)
-"
+python main.py
 ```
 
 ### 测试工具
